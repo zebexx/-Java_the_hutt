@@ -103,7 +103,7 @@ public class ExampleBot extends Bot {
     private List<Move> extractMoves(GameState gameState) {
         List<Move> moves = new ArrayList<>();
 
-        if (!playerRouteHashMap.isEmpty()) {
+        if (false) {
             for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
                 Id playerID = item.getKey();
                 Route route = item.getValue();
@@ -197,8 +197,13 @@ public class ExampleBot extends Bot {
 
                     Optional<Route> route = makeRoute(gameState, player, closestFood);
 
-                    if (route.isPresent()) {
-                        playerRouteHashMap.put(player.getId(), route.get());
+                    if (route.isPresent() && !route.isEmpty()) {
+                        try {
+                            playerRouteHashMap.put(player.getId(), route.get());
+                        }
+                        catch(NullPointerException n) {
+
+                        }
                     }
 
                     //if (direction.isPresent()) {

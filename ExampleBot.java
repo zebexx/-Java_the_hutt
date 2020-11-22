@@ -103,18 +103,20 @@ public class ExampleBot extends Bot {
     private List<Move> extractMoves(GameState gameState) {
         List<Move> moves = new ArrayList<>();
 
-        for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
-            Id playerID = item.getKey();
-            Route route = item.getValue();
-            Player player = findPlayerByID(gameState, playerID);
-            Optional<Direction> newDirection = route.step().get().getFirstDirection();
-            if (newDirection.isPresent()) {
-                playerDirectionHashMap.put(playerID, newDirection.get());
-            } else {
-                playerRouteHashMap.remove(playerID);
+        if (!playerRouteHashMap.isEmpty()) {
+            for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
+                Id playerID = item.getKey();
+                Route route = item.getValue();
+                Player player = findPlayerByID(gameState, playerID);
+                Optional<Direction> newDirection = route.step().get().getFirstDirection();
+                if (newDirection.isPresent()) {
+                    playerDirectionHashMap.put(playerID, newDirection.get());
+                } else {
+                    playerRouteHashMap.remove(playerID);
+                }
             }
         }
-
+        
         for (Entry<Id, Direction> item : playerDirectionHashMap.entrySet()) {
             Id playerID = item.getKey();
             Direction direction = item.getValue();

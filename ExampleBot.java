@@ -188,31 +188,22 @@ public class ExampleBot extends Bot {
                 int closestDistanceToFood = 11;
                 for (Collectable food : gameState.getCollectables()) {
                     int distanceToFood = gameState.getMap().distance(player.getPosition(), food.getPosition());
-                    
+
                     if (distanceToFood < 10 && !(claimedFoodPositions.contains(food.getPosition()))) {
                         if (closestDistanceToFood > distanceToFood) {
-                            closestDistanceToFood = distanceToFood;
-                            closestFood = food.getPosition();
+
+                            Optional<Route> route = makeRoute(gameState, player, food.getPosition());
+                            if (route.isPresent() && !route.isEmpty()) {
+                                closestDistanceToFood = distanceToFood;
+                                closestFood = food.getPosition();
+                            }
                         }
                     }
                 }
-
-                if (!(closestFood == null)) {
-
+                
+                if (closestFood != null) {
                     Optional<Route> route = makeRoute(gameState, player, closestFood);
-
-                    if (route.isPresent() && !route.isEmpty()) {
-                        try {
-                            playerRouteHashMap.put(player.getId(), route.get());
-                        }
-                        catch(NullPointerException n) {
-
-                        }
-                    }
-
-                    //if (direction.isPresent()) {
-                    //playerDirectionHashMap.put(player.getId(), direction.get()); }
-
+                    playerRouteHashMap.put(player.getId(), route.get());
                 }
             }
         }

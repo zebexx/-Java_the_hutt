@@ -53,6 +53,7 @@ import java.util.Map.Entry;
 public class ExampleBot extends Bot {
 
     private HashMap<Id, Direction> playerDirectionHashMap;
+    private HashMap<Id, Route> playerRouteHashMap;
     private GameStateLogger.GameStateLoggerBuilder gameStateLoggerBuilder;
     private List<Position> nextPositions;
     private Set<SpawnPoint> spawns;
@@ -101,6 +102,19 @@ public class ExampleBot extends Bot {
 
     private List<Move> extractMoves(GameState gameState) {
         List<Move> moves = new ArrayList<>();
+
+        for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
+            Id playerID = item.getKey();
+            Route route = item.getValue();
+            Player player = findPlayerByID(gameState, playerID);
+            Optional<Direction> newDirection = route.step().get().getFirstDirection();
+            if (newDirection.isPresent()) {
+                playerDirectionHashMap.put(playerID, newDirection.get());
+            } else {
+                playerRouteHashMap.remove(playerID);
+            }
+        }
+
         for (Entry<Id, Direction> item : playerDirectionHashMap.entrySet()) {
             Id playerID = item.getKey();
             Direction direction = item.getValue();
@@ -168,28 +182,7 @@ public class ExampleBot extends Bot {
                 int closestDistanceToFood = 11;
                 for (Collectable food : gameState.getCollectables()) {
                     int distanceToFood = gameState.getMap().distance(player.getPosition(), food.getPosition());
-                    // try {
-                    // Optional<Route> route = gameState.getMap().findRoute(player.getPosition(),
-                    // food.getPosition(),
-                    // gameState.getOutOfBoundsPositions());
-                    // if (route.isPresent()) {
-                    // Route r = route.get();
-                    // int routeDistance = r.getLength();
-                    // if (distanceToFood < 10 &&
-                    // !(claimedFoodPositions.contains(food.getPosition()))) {
-                    // if (closestDistanceToFood > distanceToFood && routeDistance < 21) {
-                    // closestDistanceToFood = distanceToFood;
-                    // closestFood = food.getPosition();
-                    // }
-                    // }
-                    // }
-                    // else {
-                    // break;
-                    // }
-                    // }
-                    // catch (StackOverflowError s) {
-                    // }
-
+                    
                     if (distanceToFood < 10 && !(claimedFoodPositions.contains(food.getPosition()))) {
                         if (closestDistanceToFood > distanceToFood) {
                             closestDistanceToFood = distanceToFood;
@@ -199,15 +192,16 @@ public class ExampleBot extends Bot {
                 }
 
                 if (!(closestFood == null)) {
-                    Optional<Direction> direction = gameState.getMap()
-                            .directionsTowards(player.getPosition(), closestFood).findFirst();
-                    // Optional<Route> route = gameState.getMap().findRoute(player.getPosition(),
-                    // closestFood,
-                    // gameState.getOutOfBoundsPositions());
-                    if (direction.isPresent()) {
-                        // Route r = route.get();
-                        playerDirectionHashMap.put(player.getId(), direction.get());
+
+                    Optional<Route> route = makeRoute(gameState, player, closestFood);
+
+                    if (route.isPresent()) {
+                        playerRouteHashMap.put(player.getId(), route.get());
                     }
+
+                    //if (direction.isPresent()) {
+                    //playerDirectionHashMap.put(player.getId(), direction.get()); }
+
                 }
             }
         }

@@ -28,6 +28,7 @@ import java.util.Map.Entry;
 //was there a rule about not creating more class files? 
 
 //Improve exploration 
+// - Instead if getting a new random direction when hitting an obstactle, correct the route but carry on in the same general direction
 // - I think avoid teammates might be causing more problems than it solves, players get stuck in an area just avoiding allies and not doing anything
 // - Maybe change avoid players to only apply when they are far enough away from spawnpoint.
 // - Change extractMoves to only give diagonal directions.
@@ -90,6 +91,7 @@ public class ExampleBot extends Bot {
         moveRandomly(gameState);
         avoidPlayers(gameState);
         collectFood(gameState);
+        fighting(gameState);
         List<Move> moves = extractMoves(gameState);
         return moves;
     }
@@ -129,14 +131,21 @@ public class ExampleBot extends Bot {
                 Position newPosition = gameState.getMap().getNeighbour(player.getPosition(), direction);
                 nextPositions.add(newPosition);
             } else if (player != null) {
-                // Player needs to switch to another random direction to move
+                // Player needs to switch to another direction to move
                 boolean sameDirection = true;
+                // change this
+                
                 Direction newDirection = Direction.random();
                 while (sameDirection) {
                     if (!newDirection.equals(direction) && canMove(gameState, player, newDirection)) {
                         sameDirection = false;
                     } else {
+                        //change this to stay on course
                         newDirection = Direction.random();
+                        while (newDirection == Direction.NORTH || newDirection == Direction.SOUTH
+                                || newDirection == Direction.EAST || newDirection == Direction.WEST) {
+                            newDirection = Direction.random();
+                        }
                     }
                 }
                 moves.add(new MoveImpl(playerID, newDirection));
@@ -275,7 +284,14 @@ public class ExampleBot extends Bot {
     }
 
     private void fighting(GameState gameState) {
-        
+        for (Player player : gameState.getPlayers()){
+            if (isMyPlayer(player)) {
+                if (gameState.getMap().distance(enemy.getPosition(), player.getPosition()) < 10) {
+                    Optional<Route> route = makeRoute(gameState, player, enemy.getPosition());
+                    playerRouteHashMap.put(player.getId(), route.get());
+                }
+            }
+        }
     }
 }
 

@@ -57,7 +57,6 @@ public class ExampleBot extends Bot {
     private HashMap<Id, Route> playerRouteHashMap;
     private GameStateLogger.GameStateLoggerBuilder gameStateLoggerBuilder;
     private List<Position> nextPositions;
-    private Set<SpawnPoint> spawns;
     private SpawnPoint home;
     private SpawnPoint enemy;
 
@@ -86,6 +85,7 @@ public class ExampleBot extends Bot {
     @Override
     public List<Move> makeMoves(final GameState gameState) {
         nextPositions = new ArrayList<>();
+        findSpawnPoint(gameState);
         removeDeadPlayers(gameState);
         gameStateLoggerBuilder.withPlayers().withOutOfBounds().process(gameState);
         moveRandomly(gameState);
@@ -251,20 +251,19 @@ public class ExampleBot extends Bot {
         }
     }
 
-    private void spawnpoints(GameState gameState) {
-        Set<SpawnPoint> spawnPoints = gameState.getSpawnPoints();
-        this.spawns = spawnPoints;
-    }
+
 
     private void findSpawnPoint(GameState gameState) {
         Set<SpawnPoint> spawnPoints = gameState.getSpawnPoints();
+        Id homeId = this.getId();
+
         for (SpawnPoint spawnPoint: spawnPoints) {
             Id owner = spawnPoint.getOwner();
             
-            if (owner.equals(getId())) {
+            if (owner.equals(homeId)) {
                 this.home = spawnPoint;
             }
-            else if (!owner.equals(getId())) {
+            else {
                 this.enemy = spawnPoint;
             }
         }
@@ -288,7 +287,9 @@ public class ExampleBot extends Bot {
             if (isMyPlayer(player)) {
                 if (gameState.getMap().distance(enemy.getPosition(), player.getPosition()) < 10) {
                     Optional<Route> route = makeRoute(gameState, player, enemy.getPosition());
-                    playerRouteHashMap.put(player.getId(), route.get());
+                    if (route.isPresent() && !route.isEmpty()) {
+                        playerRouteHashMap.put(player.getId(), route.get());
+                    }
                 }
             }
         }

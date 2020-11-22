@@ -84,10 +84,10 @@ public class ExampleBot extends Bot {
 
     @Override
     public List<Move> makeMoves(final GameState gameState) {
-        nextPositions = new ArrayList<>();
         findSpawnPoint(gameState);
+        nextPositions = new ArrayList<>();
         removeDeadPlayers(gameState);
-        gameStateLoggerBuilder.withPlayers().withOutOfBounds().process(gameState);
+        gameStateLoggerBuilder.process(gameState);
         moveRandomly(gameState);
         avoidPlayers(gameState);
         collectFood(gameState);
@@ -100,13 +100,14 @@ public class ExampleBot extends Bot {
     public void initialise(GameState gameState) {
         playerDirectionHashMap = new HashMap<>();
         playerRouteHashMap = new HashMap<>();
-        findSpawnPoint(gameState);
     }
 
     private List<Move> extractMoves(GameState gameState) {
         List<Move> moves = new ArrayList<>();
 
         if (!playerRouteHashMap.isEmpty()) {
+            ArrayList<Id> removeFromHashMap = new ArrayList<>();
+            //Iterator it = playerRouteHashMap.entrySet().iterator();
             for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
                 Id playerID = item.getKey();
                 Route route = item.getValue();
@@ -116,9 +117,12 @@ public class ExampleBot extends Bot {
                 if (player != null && newDirection.isPresent()) {
                     playerDirectionHashMap.put(playerID, newDirection.get());
                 } else {
-                    playerRouteHashMap.remove(playerID);
-                    
+                    removeFromHashMap.add(playerID);
+                    //playerRouteHashMap.remove(playerID);
                 }
+            }
+            for (Id id : removeFromHashMap) {
+                playerDirectionHashMap.remove(id);
             }
         }
         
@@ -213,6 +217,7 @@ public class ExampleBot extends Bot {
                 if (closestFood != null) {
                     Optional<Route> route = makeRoute(gameState, player, closestFood);
                     playerRouteHashMap.put(player.getId(), route.get());
+                    claimedFoodPositions.add(closestFood);
                 }
             }
         }
@@ -251,20 +256,27 @@ public class ExampleBot extends Bot {
         }
     }
 
+    private boolean isMySpawn(SpawnPoint spawn) {
+        return spawn.getOwner().equals(getId());
+    }
 
 
     private void findSpawnPoint(GameState gameState) {
         Set<SpawnPoint> spawnPoints = gameState.getSpawnPoints();
-        Id homeId = this.getId();
-
-        for (SpawnPoint spawnPoint: spawnPoints) {
-            Id owner = spawnPoint.getOwner();
-            
-            if (owner.equals(homeId)) {
+        for (SpawnPoint spawnPoint : spawnPoints) {
+            if (isMySpawn(spawnPoint)) {
                 this.home = spawnPoint;
+            } else {
+                this.enemy = spawnPoint;
+            }
+        }
+        for (SpawnPoint removedSpawnPoint : gameState.getRemovedSpawnPoints()) {
+            if (isMySpawn(removedSpawnPoint)) {
+                this.home = null;
             }
             else {
-                this.enemy = spawnPoint;
+                this.enemy = null;
+                System.out.println("Enemy spawnpoint destroyed");
             }
         }
     }
@@ -285,10 +297,12 @@ public class ExampleBot extends Bot {
     private void fighting(GameState gameState) {
         for (Player player : gameState.getPlayers()){
             if (isMyPlayer(player)) {
-                if (gameState.getMap().distance(enemy.getPosition(), player.getPosition()) < 10) {
-                    Optional<Route> route = makeRoute(gameState, player, enemy.getPosition());
-                    if (route.isPresent() && !route.isEmpty()) {
-                        playerRouteHashMap.put(player.getId(), route.get());
+                if (enemy != null) {
+                    if (gameState.getMap().distance(enemy.getPosition(), player.getPosition()) < 10) {
+                        Optional<Route> route = makeRoute(gameState, player, enemy.getPosition());
+                        if (route.isPresent() && !route.isEmpty()) {
+                            playerRouteHashMap.put(player.getId(), route.get());
+                        }
                     }
                 }
             }

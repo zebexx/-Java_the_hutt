@@ -97,22 +97,25 @@ public class ExampleBot extends Bot {
     @Override
     public void initialise(GameState gameState) {
         playerDirectionHashMap = new HashMap<>();
+        playerRouteHashMap = new HashMap<>();
         findSpawnPoint(gameState);
     }
 
     private List<Move> extractMoves(GameState gameState) {
         List<Move> moves = new ArrayList<>();
 
-        if (false) {
+        if (!playerRouteHashMap.isEmpty()) {
             for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
                 Id playerID = item.getKey();
                 Route route = item.getValue();
                 Player player = findPlayerByID(gameState, playerID);
-                Optional<Direction> newDirection = route.step().get().getFirstDirection();
-                if (newDirection.isPresent()) {
+                Optional<Direction> newDirection = route.getFirstDirection();
+                route.step();
+                if (player != null && newDirection.isPresent()) {
                     playerDirectionHashMap.put(playerID, newDirection.get());
                 } else {
                     playerRouteHashMap.remove(playerID);
+                    
                 }
             }
         }
@@ -149,6 +152,7 @@ public class ExampleBot extends Bot {
         // Remove dead players from the HashMap
         for (Player p : gameState.getRemovedPlayers()) {
             playerDirectionHashMap.remove(p.getId());
+            playerRouteHashMap.remove(p.getId());
         }
     }
 
@@ -267,13 +271,11 @@ public class ExampleBot extends Bot {
     }
 
     private Optional<Route> makeRoute(GameState gameState, Player player, Position futurePosition) {
-        Position currentPosition = player.getPosition();
         Set<Position> avoid = Collections.emptySet();
         Optional<Route> route = gameState.getMap().findRoute(player.getPosition(), futurePosition, avoid);
         avoid = gameState.getOutOfBoundsPositions();
-        boolean invalidRoute = true;
         if (route.isPresent()) {
-            invalidRoute = route.get().collides(avoid);
+            boolean invalidRoute = route.get().collides(avoid);
             if (invalidRoute) {
                 route.empty();
             }

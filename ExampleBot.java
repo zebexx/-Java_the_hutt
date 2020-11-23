@@ -87,7 +87,7 @@ public class ExampleBot extends Bot {
         findSpawnPoint(gameState);
         nextPositions = new ArrayList<>();
         removeDeadPlayers(gameState);
-        gameStateLoggerBuilder.process(gameState);
+        gameStateLoggerBuilder.withSpawnPoints().process(gameState);
         moveRandomly(gameState);
         avoidPlayers(gameState);
         collectFood(gameState);
@@ -270,14 +270,13 @@ public class ExampleBot extends Bot {
                 this.enemy = spawnPoint;
             }
         }
-        for (SpawnPoint removedSpawnPoint : gameState.getRemovedSpawnPoints()) {
-            if (isMySpawn(removedSpawnPoint)) {
-                this.home = null;
-            }
-            else {
-                this.enemy = null;
-                System.out.println("Enemy spawnpoint destroyed");
-            }
+
+        if (this.enemy != null && !gameState.getSpawnPointAt(enemy.getPosition()).isPresent()) {
+            enemy = null;
+        }
+        
+        if (this.home != null && !gameState.getSpawnPointAt(home.getPosition()).isPresent()) {
+            home = null;
         }
     }
 
@@ -295,14 +294,23 @@ public class ExampleBot extends Bot {
     }
 
     private void fighting(GameState gameState) {
-        for (Player player : gameState.getPlayers()){
+        for (Player player : gameState.getPlayers()) {
             if (isMyPlayer(player)) {
+                //destroys enemy spawnpoint
                 if (enemy != null) {
                     if (gameState.getMap().distance(enemy.getPosition(), player.getPosition()) < 10) {
                         Optional<Route> route = makeRoute(gameState, player, enemy.getPosition());
                         if (route.isPresent() && !route.isEmpty()) {
                             playerRouteHashMap.put(player.getId(), route.get());
                         }
+                    }
+                }
+
+                for (Player enemyP : gameState.getPlayers()) {
+                    if (!isMyPlayer(enemyP) && gameState.getMap().distance(enemyP.getPosition(), player.getPosition()) < 10) {
+                        Optional<Direction> away = gameState.getMap()
+                                .directionsAwayFrom(player.getPosition(), enemyP.getPosition()).findFirst();
+                        playerDirectionHashMap.put(player.getId(), away.get());
                     }
                 }
             }

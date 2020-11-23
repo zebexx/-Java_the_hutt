@@ -71,17 +71,15 @@ public class ExampleBot extends Bot {
     private void moveRandomly(GameState gameState) {
         for (Player player : gameState.getPlayers()) {
             Id playerID = player.getId();
-            if (isMyPlayer(player) && !playerDirectionHashMap.containsKey(playerID)) {
-                Direction newDirection = Direction.random();
-                while (newDirection == Direction.NORTH || newDirection == Direction.SOUTH
-                        || newDirection == Direction.EAST || newDirection == Direction.WEST) {
-                    newDirection = Direction.random();
-                }
-                playerDirectionHashMap.put(playerID, Direction.random());
-            } else if (isMyPlayer(player)) {
+            if (isMyPlayer(player) && !playerRouteHashMap.containsKey(playerID)) {
+                Optional<Route> route = randomRoute(gameState, player, routePositions(gameState, player));
+                
+                playerRouteHashMap.put(playerID, route.get());
+                //playerDirectionHashMap.put(playerID, Direction.random());
+            }/*  else if (isMyPlayer(player)) {
                 Direction oldDirection = playerDirectionHashMap.get(playerID);
                 playerDirectionHashMap.put(playerID, oldDirection);
-            }
+            } */
         }
     }
 
@@ -311,12 +309,15 @@ public class ExampleBot extends Bot {
         return newRoute;
     }
 
-    private Optional<Route> getSimilarRoute(GameState gameState, Player player, ArrayList<Position> possiblePositions) {
+    /* private Optional<Route> getSimilarRoute(GameState gameState, Player player, ArrayList<Position> possiblePositions) {
         Position oldPosition = player.getPosition();
-        Direction oldDirection = playerRouteHashMap.get(player.getId());
+        Optional<Direction> oldDirection = playerRouteHashMap.get(player.getId()).getFirstDirection();
         for (Position p : possiblePositions) {
-            Optional<Direction> newDirection = directionTowards(oldPosition, p);
-            if (directionsTowards(oldPosition, p).contains(oldDirection))
+            ArrayList<Direction> newDirections = gameState.getMap().directionsTowards(oldPosition, p)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            if (newDirections.contains(oldDirection)) {
+                
+            }
         }
         Optional<Route> newRoute = makeRoute(gameState, player, player.getPosition()); // initialise newRoute
         boolean invalidRoute = true;
@@ -329,7 +330,7 @@ public class ExampleBot extends Bot {
             }
         }
         return newRoute;
-    }
+    } */
 
     private Optional<Route> makeRoute(GameState gameState, Player player, Position futurePosition) {
         Set<Position> avoid = Collections.emptySet();

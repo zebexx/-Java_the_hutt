@@ -87,7 +87,7 @@ public class ExampleBot extends Bot {
         findSpawnPoint(gameState);
         nextPositions = new ArrayList<>();
         removeDeadPlayers(gameState);
-        gameStateLoggerBuilder.withSpawnPoints().process(gameState);
+        gameStateLoggerBuilder.process(gameState);
         moveRandomly(gameState);
         avoidPlayers(gameState);
         collectFood(gameState);
@@ -307,10 +307,32 @@ public class ExampleBot extends Bot {
                 }
 
                 for (Player enemyP : gameState.getPlayers()) {
-                    if (!isMyPlayer(enemyP) && gameState.getMap().distance(enemyP.getPosition(), player.getPosition()) < 10) {
-                        Optional<Direction> away = gameState.getMap()
+                    if (!isMyPlayer(enemyP)
+                            && gameState.getMap().distance(enemyP.getPosition(), player.getPosition()) < 10) {
+                        boolean alone = true;
+                        int distanceToEnemy = gameState.getMap().distance(enemyP.getPosition(), player.getPosition());
+
+                        for (Player friend : gameState.getPlayers()) {
+                            if (isMyPlayer(friend) && gameState.getMap().distance(enemyP.getPosition(),
+                                    friend.getPosition()) <= distanceToEnemy) {
+                                alone = false;
+                                break;
+                            }
+                        }
+                        
+                        // TODO: make sure that both the player & the friend go towards the same enemy + case where there's more than one enemy
+
+
+                        if(alone) {
+                            Optional<Direction> away = gameState.getMap()
                                 .directionsAwayFrom(player.getPosition(), enemyP.getPosition()).findFirst();
-                        playerDirectionHashMap.put(player.getId(), away.get());
+                            playerDirectionHashMap.put(player.getId(), away.get());
+                            //playerRouteHashMap.put(player.getId()), );
+                        } else {
+                            Optional<Direction> attackDirection = gameState.getMap().directionsTowards(player.getPosition(), enemyP.getPosition()).findFirst();
+                            playerDirectionHashMap.put(player.getId(), attackDirection.get());
+                            playerRouteHashMap.put(player.getId(), makeRoute(gameState, player, enemyP.getPosition()).get());
+                        }
                     }
                 }
             }

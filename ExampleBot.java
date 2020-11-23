@@ -12,6 +12,7 @@ import com.scottlogic.hackathon.game.Position;
 import com.scottlogic.hackathon.game.Collectable;
 import com.scottlogic.hackathon.game.SpawnPoint;
 import com.scottlogic.hackathon.game.Route;
+import com.scottlogic.hackathon.game.GameGeometry;
 
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -20,6 +21,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Random;
+import java.util.stream.*;
 
 //TODO: 
 //Player usernames? xX_Noob_bot_Pwner69_Xx 
@@ -107,7 +110,7 @@ public class ExampleBot extends Bot {
 
         if (!playerRouteHashMap.isEmpty()) {
             ArrayList<Id> removeFromHashMap = new ArrayList<>();
-            //Iterator it = playerRouteHashMap.entrySet().iterator();
+
             for (Entry<Id, Route> item : playerRouteHashMap.entrySet()) {
                 Id playerID = item.getKey();
                 Route route = item.getValue();
@@ -118,7 +121,6 @@ public class ExampleBot extends Bot {
                     playerDirectionHashMap.put(playerID, newDirection.get());
                 } else {
                     removeFromHashMap.add(playerID);
-                    //playerRouteHashMap.remove(playerID);
                 }
             }
             for (Id id : removeFromHashMap) {
@@ -280,6 +282,55 @@ public class ExampleBot extends Bot {
         }
     }
 
+    private Optional<Route> routeMove(GameState gameState, Player player) {
+        Position playerP = player.getPosition();
+        ArrayList<Position> surroundingPositions = gameState.getMap().getSurroundingPositions(playerP, 9)
+                .collect(Collectors.toCollection(ArrayList::new));
+        ArrayList<Position> possiblePositions = new ArrayList<>();
+        for (Position p : surroundingPositions) {
+            int distance = gameState.getMap().distance(playerP, p);
+            // keep only the positions 9 spaces away
+            if (distance < 9) {
+                possiblePositions.add(p);
+            }
+        }
+
+        /* Position topRight = new Position(playerP.getX() + 10, playerP.getY() + 10);
+        Position topLeft = new Position(playerP.getX() - 10, playerP.getY() + 10);
+        Position bottomRight = new Position(playerP.getX() + 10, playerP.getY() - 10);
+        Position bottomLeft = new Position(playerP.getX() - 10, playerP.getY() - 10);
+        Set<Position> square;
+        Position[] positionArray = { topRight, topLeft, bottomRight, bottomLeft };
+        ArrayList<Position> squarePositions = new ArrayList<>();
+        for (int relX = 0; relX < 21; relX++) {
+            int x = bottomLeft.getX() + relX;
+            for (int relY = 0; relY < 21; relY++) {
+                int y = bottomLeft.getY() + relY;
+                Position position = new Position(x, y);
+                squarePositions.add(position);
+            }
+        }
+        ArrayList<Position> possiblePositions = new ArrayList<>();
+        for (Position p : squarePositions) {
+            int distance = gameState.getMap().distance(playerP, p);
+            if (distance == 9) {
+                possiblePositions.add(p);
+            }
+        }  */
+
+        Optional<Route> newRoute = makeRoute(gameState, player, playerP); // initialise newRoute
+        boolean invalidRoute = true;
+        while (invalidRoute) { // search for a route that doesn't cross water
+            Random random = new Random();
+            int rIndex = (random.nextInt(possiblePositions.size()));
+            newRoute = makeRoute(gameState, player, possiblePositions.get(rIndex));
+            if (!newRoute.isEmpty()) {
+                invalidRoute = false;
+            }
+        }
+        return newRoute;
+    }
+
     private Optional<Route> makeRoute(GameState gameState, Player player, Position futurePosition) {
         Set<Position> avoid = Collections.emptySet();
         Optional<Route> route = gameState.getMap().findRoute(player.getPosition(), futurePosition, avoid);
@@ -321,7 +372,7 @@ public class ExampleBot extends Bot {
                         }
                         
                         // TODO: make sure that both the player & the friend go towards the same enemy + case where there's more than one enemy
-
+                        // check that they can both go towards the enemy (route)
 
                         if(alone) {
                             Optional<Direction> away = gameState.getMap()

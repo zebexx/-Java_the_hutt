@@ -54,6 +54,12 @@ import java.util.stream.*;
 // - form squad after a number of turns without finding food?
 // - destroy other spawnpoint 
 
+//Can do
+//Fix small squad grouping with routes etc
+//Stores explored positions
+//priotise directions away from our spawnpoint
+//defend spawnpoint
+
 public class ExampleBot extends Bot {
 
     private HashMap<Id, Direction> playerDirectionHashMap;
@@ -142,6 +148,7 @@ public class ExampleBot extends Bot {
                 Optional<Route> newRoute = awayRoute(gameState, player, routePositions(gameState, player),
                 gameState.getMap().getNeighbour(player.getPosition(),route.getFirstDirection().get()));
                 System.out.println(newRoute.get().toString());
+                //add an if statement here to make sure that the new route has been generated correctly 
                 Direction newdirection = newRoute.get().getFirstDirection().get();
                 int counter = 0;
                 while (!canMove(gameState, player, newdirection) && counter < 10) {
@@ -149,6 +156,7 @@ public class ExampleBot extends Bot {
                             gameState.getMap().getNeighbour(player.getPosition(), route.getFirstDirection().get()));
                     counter++;
                 }
+                
                 playerRouteHashMap.put(playerID, newRoute.get());
                 moves.add(new MoveImpl(playerID, newRoute.get().getFirstDirection().get()));
                 Position newPosition = gameState.getMap().getNeighbour(player.getPosition(), newRoute.get().getFirstDirection().get());

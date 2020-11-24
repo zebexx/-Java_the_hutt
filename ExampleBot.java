@@ -90,7 +90,7 @@ public class ExampleBot extends Bot {
         removeDeadPlayers(gameState);
         gameStateLoggerBuilder.process(gameState);
         moveRandomly(gameState);
-        //avoidPlayers(gameState);
+        avoidPlayers(gameState);
         collectFood(gameState);
         fighting(gameState);
         List<Move> moves = extractMoves(gameState);
@@ -140,11 +140,11 @@ public class ExampleBot extends Bot {
             } else if (player != null) {
                 // Player needs to switch to another direction to move
                 Optional<Route> newRoute = randomRoute(gameState, player, routePositions(gameState, player));
+                System.out.println(newRoute);
                 Direction newdirection = newRoute.get().getFirstDirection().get();
-
-                while (!canMove(gameState, player, newdirection)) {
+                int counter = 0;
+                while (!canMove(gameState, player, newdirection) && counter < 10) {
                     newRoute = randomRoute(gameState, player, routePositions(gameState, player));
-                    int counter = 0;
                     counter++;
                 }
                 playerRouteHashMap.put(playerID, newRoute.get());

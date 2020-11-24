@@ -140,7 +140,7 @@ public class ExampleBot extends Bot {
             } else if (player != null) {
                 // Player needs to switch to another direction to move
                 Optional<Route> newRoute = randomRoute(gameState, player, routePositions(gameState, player));
-                System.out.println(newRoute);
+                System.out.println(newRoute.toString());
                 Direction newdirection = newRoute.get().getFirstDirection().get();
                 int counter = 0;
                 while (!canMove(gameState, player, newdirection) && counter < 10) {

@@ -139,12 +139,14 @@ public class ExampleBot extends Bot {
                 nextPositions.add(newPosition);
             } else if (player != null) {
                 // Player needs to switch to another direction to move
-                Optional<Route> newRoute = randomRoute(gameState, player, routePositions(gameState, player));
-                System.out.println(newRoute.toString());
+                Optional<Route> newRoute = awayRoute(gameState, player, routePositions(gameState, player),
+                gameState.getMap().getNeighbour(player.getPosition(),route.getFirstDirection().get()));
+                System.out.println(newRoute.get().toString());
                 Direction newdirection = newRoute.get().getFirstDirection().get();
                 int counter = 0;
                 while (!canMove(gameState, player, newdirection) && counter < 10) {
-                    newRoute = randomRoute(gameState, player, routePositions(gameState, player));
+                    newRoute = awayRoute(gameState, player, routePositions(gameState, player),
+                            gameState.getMap().getNeighbour(player.getPosition(), route.getFirstDirection().get()));
                     counter++;
                 }
                 playerRouteHashMap.put(playerID, newRoute.get());
